@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require 'hyouga/main'
+Hyouga::Main.new(ARGV).execute
