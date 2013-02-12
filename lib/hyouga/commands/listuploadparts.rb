@@ -13,11 +13,16 @@ module Hyouga::Commands
 			vault_name = shift_arg("vault")
 			upload_id = shift_arg("upload_id")
 
-			resp = wrapper.list_parts(vault_name: vault_name, upload_id: upload_id)
+			params = { vault_name: vault_name, upload_id: upload_id }
 
-			resp[:parts].each do |part|
-				puts "#{part[:sha256_tree_hash]} #{part[:range_in_bytes]}"
-			end
+			resp = nil
+			begin
+				params.merge! marker: resp[:marker] if resp and resp[:marker]
+				resp = wrapper.list_parts(params)
+				resp[:parts].each do |part|
+					puts "#{part[:sha256_tree_hash]} #{part[:range_in_bytes]}"
+				end
+			end until resp[:marker].nil?
 		end
 	end
 end

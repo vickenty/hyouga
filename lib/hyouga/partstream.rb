@@ -6,15 +6,17 @@ module Hyouga
 
 		attr_reader :stream, :offset, :part_size
 
-		def self.open(filename, part_size=nil)
+		def self.open(filename, part_size)
 			self.new(File.open(filename, "rb"), part_size)
 		end
 
-		def initialize(stream, part_size=nil)
+		def initialize(stream, part_size)
 			@stream = stream
 			@offset = 0
 
-			@part_size = part_size || self.class.detect_part_size(stream.size)
+			fail if part_size.nil?
+
+			@part_size = part_size
 
 			@hashes = []
 			@linear_digest = new_digest
@@ -34,11 +36,6 @@ module Hyouga
 			reduce_tree_hash(@hashes)
 		end
 
-		def size
-			@stream.size
-		end
-
-
 		def self.detect_part_size(size)
 			estimate = size / 1000
 			return CHUNK_SIZE if estimate < CHUNK_SIZE
@@ -52,6 +49,7 @@ module Hyouga
 		private
 
 		def process_next_part
+			fail if part_size.nil?
 			remains = part_size
 
 			part_digest = new_digest

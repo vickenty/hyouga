@@ -11,6 +11,7 @@ module Hyouga::Commands
 				opt :interactive, "Display progress bar", short: '-i'
 				opt :description, "Set archive description", short: '-d', type: :string
 				opt :save_name, "Save filename as archive description", short: '-n'
+				opt :resume, "Resume an interrupted upload", short: '-r', type: :string
 				stop_on_unknown
 			end
 
@@ -20,19 +21,30 @@ module Hyouga::Commands
 			filename = @args.shift
 			Trollop::die "missing filename" if filename.nil?
 
-			opts[:part_size] *= 2**20 unless opts[:part_size].nil?
-
 			descr = nil
 			descr = File.basename(filename) if opts[:save_name]
 			descr = opts[:description] unless opts[:description].nil?
 
-			parts = Hyouga::PartStream.open(filename, opts[:part_size])
+			stream = File.open(filename, "rb")
 			vault = Hyouga::Vault.new(wrapper, vault_name)
-			uploader = vault.new_upload(parts, descr)
+
+			size = File.size(filename)
+
+			if opts[:part_size].nil?
+				part_size = Hyouga::PartStream.detect_part_size(size)
+			else
+				part_size = opts[:part_size] * 2**20
+			end
+
+			if opts[:resume].nil?
+				uploader = vault.new_upload(stream, part_size, descr)
+			else
+				uploader = vault.resume_upload(stream, opts[:resume])
+			end
 
 			reporter = nil
 			if opts[:interactive]
-				reporter = Hyouga::Reporter.new(uploader)
+				reporter = Hyouga::Reporter.new(uploader, size)
 				reporter.start
 			end
 
@@ -41,7 +53,6 @@ module Hyouga::Commands
 			reporter.stop unless reporter.nil?
 
 			puts archive_id
-
 		end
 	end
 end

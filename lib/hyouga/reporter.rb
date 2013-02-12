@@ -2,16 +2,17 @@ require 'ruby-progressbar'
 
 module Hyouga
 	class Reporter
-		FORMAT = "%a [%b>%i] %p%% %c/%C %e"
+		FORMAT = "[%T] %a [%b>%i] %p%% %c/%C %e"
 
-		def initialize(uploader)
+		def initialize(uploader, total)
 			@uploader = uploader
 			@stream = uploader.partstream
 			@running = nil
 			@thread = nil
+			@total = total
 			@progress = ProgressBar.create(
 				format: FORMAT,
-				total: @stream.size
+				total: total
 			)
 		end
 
@@ -36,9 +37,10 @@ module Hyouga
 
 		def update
 			part = @uploader.current_part
+			@progress.title = @uploader.state.to_s
 			unless part.nil?
 				@progress.progress = part.nil? ? 0 : part.stream.offset
-				if part.stream.offset == @stream.size
+				if part.stream.offset == @total
 					@running = false
 				end
 			end
