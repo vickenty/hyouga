@@ -19,8 +19,7 @@ module Hyouga::Commands
 		end
 
 		def show(job)
-			complete = job[:completed] ? "READY" : "     "
-			puts "#{complete} #{job[:job_id]} #{job[:job_description] or "<no description>"}"
+			Hyouga::Formatter.print_job(job)
 		end
 	end
 end

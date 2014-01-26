@@ -2,6 +2,7 @@ require 'trollop'
 require 'hyouga'
 require 'hyouga/reporter'
 require 'hyouga/command'
+require 'hyouga/formatter'
 
 Dir.glob(File.expand_path("../commands/*.rb", __FILE__)).each { |file| require file }
 
